@@ -51,46 +51,59 @@ def preprocess(file_path):
     img = img / 255.0
     return img
 
-def verify(model, detection_threshold=0.5, verification_threshold=0.5, max_validation=10):
+# def contains_face(image_path):
+#     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+#     img = cv2.imread(image_path)
+#     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+#     return len(faces) > 0
+
+def verify(model, detection_threshold=0.5, verification_threshold=0.5, return_identity=False):
     input_path = os.path.join('application_data', 'input_image', 'input_image.jpg')
-    verification_dir = os.path.join('data', 'positive')
-
-    print("[INFO] Verifying image...")
-
     try:
         input_img = preprocess(input_path)
     except Exception as e:
         print("[ERROR] Gagal load input image:", e)
-        return [], False
+        return [], None if return_identity else False
 
-    all_files = [f for f in os.listdir(verification_dir) if f.endswith('.jpg') or f.endswith('.png')]
-    if len(all_files) == 0:
-        print("[ERROR] Tidak ada gambar valid di folder positive.")
-        return [], False
+    matched_user = None
+    best_score = 0
 
-    # Pilih beberapa gambar acak untuk divalidasi
-    selected_files = random.sample(all_files, min(max_validation, len(all_files)))
+    for user in os.listdir('data'):
+        user_path = os.path.join('data', user, 'positive')
+        if not os.path.isdir(user_path):
+            continue
+        all_imgs = [img for img in os.listdir(user_path) if img.endswith(('.jpg', '.png'))]
+        if not all_imgs:
+            continue
 
-    results = []
-    for image_name in selected_files:
-        try:
-            validation_img = preprocess(os.path.join(verification_dir, image_name))
-            result = model.predict(
-                [tf.expand_dims(input_img, 0), tf.expand_dims(validation_img, 0)],
-                verbose=0
-            )
-            results.append(result)
-        except Exception as e:
-            print(f"[WARNING] Gagal proses {image_name}: {e}")
+        results = []
+        for img_name in all_imgs[:10]:  # batasi 10 untuk efisiensi
+            try:
+                validation_img = preprocess(os.path.join(user_path, img_name))
+                result = model.predict([tf.expand_dims(input_img, 0), tf.expand_dims(validation_img, 0)], verbose=0)
+                results.append(result)
+            except Exception as e:
+                print(f"[WARNING] Error loading {img_name}: {e}")
 
-    if not results:
-        return [], False
+        if not results:
+            continue
 
-    detection = np.sum(np.array(results) > detection_threshold)
-    verification = detection / len(results) > verification_threshold
+        detection = np.sum(np.array(results) > detection_threshold)
+        score = detection / len(results)
 
-    print(f"[INFO] {detection}/{len(results)} lolos detection_threshold")
-    return results, verification
+        if score > verification_threshold and score > best_score:
+            best_score = score
+            matched_user = user
+
+        # if not contains_face(input_path):
+        #     print("[INFO] Tidak ada wajah terdeteksi.")
+        #     return [], None
+
+    if return_identity:
+        return [], matched_user
+    else:
+        return [], matched_user is not None
 
 def load_model():
     return tf.keras.models.load_model('model/siamese_model.h5',

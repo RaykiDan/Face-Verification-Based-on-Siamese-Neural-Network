@@ -1,0 +1,6 @@
+*.log
+model/*.h5
+model/*.keras
+data/
+venv/
+
