@@ -100,6 +100,8 @@ def verify(model, detection_threshold=0.5, verification_threshold=0.5, return_id
         #     print("[INFO] Tidak ada wajah terdeteksi.")
         #     return [], None
 
+        print(f"[DEBUG] {user} confidence scores: {np.round(results, 2).reshape(-1).tolist()}")
+
     if return_identity:
         return [], matched_user
     else:

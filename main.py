@@ -30,7 +30,7 @@ class FaceVerificationApp(QtWidgets.QWidget):
         self.cap = cv2.VideoCapture(4)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_frame)
-        self.timer.start(30)
+        self.timer.start(60)
 
         # Load model
         self.model = load_model()
