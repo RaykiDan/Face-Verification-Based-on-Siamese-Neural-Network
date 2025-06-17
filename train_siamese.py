@@ -1,9 +1,9 @@
 import os
 import tensorflow as tf
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Agg')  # Gunakan non-GUI backend (headless backend)
+matplotlib.use('Agg')  # headless backend, aman di server/headless
+import matplotlib.pyplot as plt
 from tensorflow.keras.metrics import Precision, Recall
 from sklearn.metrics import confusion_matrix
 from model.siamese_model import build_siamese_model
@@ -12,7 +12,7 @@ from utils import config
 import random
 
 # Hyperparameters
-EPOCHS = 10
+EPOCHS = 30
 BATCH_SIZE = 16
 
 # Load dataset paths
@@ -98,44 +98,24 @@ def train():
     model.save(config.MODEL_PATH)
     print(f"Model disimpan ke {config.MODEL_PATH}")
 
-    # Plot grafik
-    plot_training(EPOCHS, history_loss, history_acc, history_precision, history_recall)
+    # Plot grafik per file
+    plot_graph(history_loss, 'Loss', 'loss.png')
+    plot_graph(history_acc, 'Accuracy', 'accuracy.png')
+    plot_graph(history_precision, 'Precision', 'precision.png')
+    plot_graph(history_recall, 'Recall', 'recall.png')
 
-# Plot function
-def plot_training(epochs, loss, acc, precision, recall):
-    epochs_range = range(1, epochs+1)
-    plt.figure(figsize=(12, 8))
-
-    plt.subplot(2, 2, 1)
-    plt.plot(epochs_range, loss, marker='o')
-    plt.title('Loss')
+# Fungsi plot per file
+def plot_graph(data, ylabel, filename):
+    epochs_range = range(1, len(data)+1)
+    plt.figure(figsize=(8, 6))
+    plt.plot(epochs_range, data, marker='o')
+    plt.title(ylabel)
     plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-
-    plt.subplot(2, 2, 2)
-    plt.plot(epochs_range, acc, marker='o')
-    plt.title('Accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-
-    plt.subplot(2, 2, 3)
-    plt.plot(epochs_range, precision, marker='o')
-    plt.title('Precision')
-    plt.xlabel('Epoch')
-    plt.ylabel('Precision')
-
-    plt.subplot(2, 2, 4)
-    plt.plot(epochs_range, recall, marker='o')
-    plt.title('Recall')
-    plt.xlabel('Epoch')
-    plt.ylabel('Recall')
-
-    plt.tight_layout()
-    plt.show()
-
-    plt.tight_layout()
-    plt.savefig('training_result.png')
-    print("Grafik training telah disimpan di: training_result.png")
+    plt.ylabel(ylabel)
+    plt.grid(True)
+    plt.savefig(filename)
+    plt.close()
+    print(f"Grafik {ylabel} disimpan di: {filename}")
 
 if __name__ == "__main__":
     train()
