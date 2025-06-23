@@ -27,7 +27,7 @@ class FaceVerificationApp(QtWidgets.QWidget):
         self.ui.setupUi(self)
 
         # Inisialisasi webcam
-        self.cap = cv2.VideoCapture(4)
+        self.cap = cv2.VideoCapture(0)
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(60)
